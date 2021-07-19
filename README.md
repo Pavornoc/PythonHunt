@@ -6,7 +6,7 @@
 ### About
 This script queries APIs for various freely-available intelligence platforms
 in order to gain important context and reputation data for IP addresses and/or
-domains.  
+domains.
 
 ---
 
@@ -26,8 +26,8 @@ domains.
 * Shodan
 
 If you do not wish to create an account to get an API key for these platforms,
-you can comment out their functions at the end of the code and just use the
-data from WHOIS, AlienVault, Robtex, and IP Info.
+you can use the `--platforms` argument to only enable the platforms you want
+to use.
 
 
 #### Installation and Requirements
