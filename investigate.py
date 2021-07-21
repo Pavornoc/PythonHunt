@@ -5,7 +5,6 @@ Script to assist in investigations by collecting IP data from various sources.
 """
 
 import argparse
-import sys
 from datetime import datetime
 
 import requests
@@ -27,6 +26,24 @@ VT_API = "[YOUR API KEY HERE]"
 # https://api.xforce.ibmcloud.com/doc/#IP_Reputation_get_ipr_ip
 XFORCE_API = "[YOUR API KEY HERE]"
 
+# Platforms
+ALIENVAULT_OTX = "alientvault-otx"
+IBM_X_FORCE = "ibm-x-force"
+IPINFO_IO = "ipinfo.io"
+ROBTEX = "robtex"
+SHODAN = "shodan"
+VIRUSTOTAL = "virustotal"
+WHOIS = "whois"
+PLATFORMS = [
+    ALIENVAULT_OTX,
+    IBM_X_FORCE,
+    IPINFO_IO,
+    ROBTEX,
+    SHODAN,
+    VIRUSTOTAL,
+    WHOIS,
+]
+
 
 def main():
     """
@@ -42,18 +59,22 @@ def main():
     group.add_argument(
         "-f",
         "--file",
-        help="File containing a list of IPs (1 per line, up to 5 due to ratelimiting).",
+        help="File containing a list of IPs (1 per line, up to 5 if you're "
+        "using VirusTotal due to ratelimiting).",
     )
-    if len(sys.argv) == 1:
-        parser.print_help(sys.stderr)
-        sys.exit(1)
-
+    parser.add_argument(
+        "-p",
+        "--platforms",
+        nargs="+",
+        default=PLATFORMS,
+        choices=PLATFORMS,
+    )
     args = parser.parse_args()
 
     if args.ipaddress:
-        ip_check(args.ipaddress)
+        ip_check(args.ipaddress, args.platforms)
     elif args.domain:
-        domain_check(args.domain)
+        domain_check(args.domain, args.platforms)
     elif args.file:
         targets_processed_count = 0
         with open(args.file) as file:
@@ -63,14 +84,19 @@ def main():
                     break
                 clean = target.strip()
                 type = clean.replace(".", "").replace(":", "").replace("/", "")
+                # TODO: Not a gret check for IP address VS domain
+                # "abc123.com" will be skipped for example
                 if type.isdigit():
-                    targets_processed_count += 1
-                    ip_check(clean)
+                    if VIRUSTOTAL in args.platforms:
+                        targets_processed_count += 1
+                    ip_check(clean, args.platforms)
                 elif type.isalpha():
-                    targets_processed_count += 1
-                    domain_check(clean)
+                    if VIRUSTOTAL in args.platforms:
+                        targets_processed_count += 1
+                    domain_check(clean, args.platforms)
                 else:
                     print(f"Skipping {clean}, can't determine the type.")
+
 
 # Start of IP Check functions
 
@@ -110,7 +136,7 @@ def shodan_check(target):
     try:
         data = shodan.Shodan(SHODAN_API).host(target)
     except shodan.APIError as error:
-        print(error)
+        print(f"    {error}")
     else:
         print(
             """
@@ -539,28 +565,38 @@ def xforce_domain(target):
         )
 
 
-def ip_check(target):
+def ip_check(target, platforms):
     """
     Collection of all IP check functions to run.
     Comment out specific ones if you do not have an API key, as necessary.
     """
-    geo_info(target)
-    shodan_check(target)
-    vt_ip_check(target)
-    av_otx(target)
-    xforce_ip(target)
-    robtex(target)
+    if IPINFO_IO in platforms:
+        geo_info(target)
+    if SHODAN in platforms:
+        shodan_check(target)
+    if VIRUSTOTAL in platforms:
+        vt_ip_check(target)
+    if ALIENVAULT_OTX in platforms:
+        av_otx(target)
+    if IBM_X_FORCE in platforms:
+        xforce_ip(target)
+    if ROBTEX in platforms:
+        robtex(target)
 
 
-def domain_check(target):
+def domain_check(target, platforms):
     """
     Collection of all Domain check functions to run.
     Comment out specific ones if you do not have an API key, as necessary.
     """
-    whois_lookup(target)
-    vt_domain_check(target)
-    av_otx_domain(target)
-    xforce_domain(target)
+    if WHOIS in platforms:
+        whois_lookup(target)
+    if VIRUSTOTAL in platforms:
+        vt_domain_check(target)
+    if ALIENVAULT_OTX in platforms:
+        av_otx_domain(target)
+    if IBM_X_FORCE in platforms:
+        xforce_domain(target)
 
 
 if __name__ == "__main__":
