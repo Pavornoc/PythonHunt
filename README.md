@@ -74,8 +74,8 @@ look up 5 items per minute by default.
 If you have paid for API keys without limits,you can ignore this.  
 
 Otherwise, you can also specify which APIs to use with the optional `-p` 
-or `--platforms` flag after the `-i`, `-d`, or `-f` flags..
-By fefault, if no platform is specified, the script will run through all
+or `--platforms` flag after the `-i`, `-d`, or `-f` flags.
+By default, if no platform is specified, the script will run through all
 of them.
 
 ```bash

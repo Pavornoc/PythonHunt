@@ -60,7 +60,7 @@ def main():
         "-f",
         "--file",
         help="File containing a list of IPs (1 per line, up to 5 if "
-        "using VirusTotal due to API ratelimiting).",
+        "using VirusTotal or Robtex due to API ratelimiting).",
     )
     parser.add_argument(
         "-p",
@@ -80,18 +80,18 @@ def main():
         with open(args.file) as file:
             for target in file:
                 if targets_processed_count > 5:
-                    print("VirusTotal has a rate limit of 5 checks, stopping.")
+                    print("Stopping due to API ratelimits.")
                     break
                 clean = target.strip()
-                type = clean.replace(".", "").replace(":", "").replace("/", "")
+                kind = clean.replace(".", "").replace(":", "").replace("/", "")
                 # TODO: Not a gret check for IP address VS domain
                 # "abc123.com" will be skipped for example
-                if type.isdigit():
-                    if VIRUSTOTAL in args.platforms:
+                if kind.isdigit():
+                    if any(limit in args.platforms for limit in (VIRUSTOTAL, ROBTEX)):
                         targets_processed_count += 1
                     ip_check(clean, args.platforms)
-                elif type.isalpha():
-                    if VIRUSTOTAL in args.platforms:
+                elif kind.isalpha():
+                    if any(limit in args.platforms for limit in (VIRUSTOTAL, ROBTEX)):
                         targets_processed_count += 1
                     domain_check(clean, args.platforms)
                 else:
@@ -259,7 +259,7 @@ def robtex(target):
     Robtex provides acitve and passive DNS data, as well as BGP routing data.
     """
     # Robtex doesn't accept the Python UA for some reason, so we need to set a
-    # custom UA.  This one is mimicking Firefox 86 on MacOS Big Sur.
+    # custom UA.  This one is mimicking Firefox 90 on MacOS Big Sur.
     # Change if desired.
     headers = {
         "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:90.0) Gecko/20100101 Firefox/90.0"
