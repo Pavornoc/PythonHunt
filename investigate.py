@@ -27,12 +27,12 @@ VT_API = "[YOUR API KEY HERE]"
 XFORCE_API = "[YOUR API KEY HERE]"
 
 # Platforms
-ALIENVAULT_OTX = "alientvault-otx"
-IBM_X_FORCE = "ibm-x-force"
-IPINFO_IO = "ipinfo.io"
+ALIENVAULT_OTX = "otx"
+IBM_X_FORCE = "x-force"
+IPINFO_IO = "ipinfo"
 ROBTEX = "robtex"
 SHODAN = "shodan"
-VIRUSTOTAL = "virustotal"
+VIRUSTOTAL = "vt"
 WHOIS = "whois"
 PLATFORMS = [
     ALIENVAULT_OTX,
@@ -59,8 +59,8 @@ def main():
     group.add_argument(
         "-f",
         "--file",
-        help="File containing a list of IPs (1 per line, up to 5 if you're "
-        "using VirusTotal due to ratelimiting).",
+        help="File containing a list of IPs (1 per line, up to 5 if "
+        "using VirusTotal due to API ratelimiting).",
     )
     parser.add_argument(
         "-p",
@@ -262,7 +262,7 @@ def robtex(target):
     # custom UA.  This one is mimicking Firefox 86 on MacOS Big Sur.
     # Change if desired.
     headers = {
-        "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10.16; rv:86.0) Gecko/20100101 Firefox/86.0"
+        "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:90.0) Gecko/20100101 Firefox/90.0"
     }
     data = requests.get(
         f"https://freeapi.robtex.com/ipquery/{target}", headers=headers
@@ -568,7 +568,6 @@ def xforce_domain(target):
 def ip_check(target, platforms):
     """
     Collection of all IP check functions to run.
-    Comment out specific ones if you do not have an API key, as necessary.
     """
     if IPINFO_IO in platforms:
         geo_info(target)
@@ -587,7 +586,6 @@ def ip_check(target, platforms):
 def domain_check(target, platforms):
     """
     Collection of all Domain check functions to run.
-    Comment out specific ones if you do not have an API key, as necessary.
     """
     if WHOIS in platforms:
         whois_lookup(target)

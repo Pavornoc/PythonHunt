@@ -26,8 +26,8 @@ domains.
 * Shodan
 
 If you do not wish to create an account to get an API key for these platforms,
-you can use the `--platforms` argument to only enable the platforms you want
-to use.
+you can use the `-p` or `--platforms` argument to only enable the platforms you want
+to use.  See Example Usage below for more information.
 
 
 #### Installation and Requirements
@@ -53,26 +53,38 @@ $ investigate
 
 
 #### Example Usage
-Python Hunt can take single IPs as command line argument with -i or --ipaddress
+Python Hunt can take single IPs as command line argument with `-i` or `--ipaddress`.
 ```bash
 $ investigate -i 95.217.163.246
 ```
 
-It can also perform a lookup for domains with -d or --domain flags
+It can also perform a lookup for domains with `-d` or `--domain` flags.
 ```bash
 $ investigate -d apple.com
 ```
 Finally, it can check a file for a list of IPs or Domains.
 You may mix types in the file, but they must be 1 per line.
-You can do this by using -f or --file
+You can do this by using `-f` or `--file`.
 
 ```bash
 $ investigate -f IoC_file.txt
 ```
 Unfortunately, due to API rate limiting with the free APIs, you may only
-look up 5 items per minute.  If you have paid for API keys without limits,
-you may adjust the code to omit this rate limit check.
+look up 5 items per minute by default.  
+If you have paid for API keys without limits,you can ignore this.  
 
+Otherwise, you can also specify which APIs to use with the optional `-p` 
+or `--platforms` flag after the `-i`, `-d`, or `-f` flags..
+By fefault, if no platform is specified, the script will run through all
+of them.
+
+```bash
+$ investigate -i 165.254.239.130 -p ipinfo
+```
+Or
+```bash
+$ investigate -f IoC_file.txt -p otx shodan
+```
 
 #### Example Output
 
@@ -195,6 +207,31 @@ __________________________________________________
 
 ```
 
+---
+
+```bash
+$ investigate -i 165.254.239.130 -p ipinfo robtex
+_________________________________________
+
+    Investigating 165.254.239.130:
+
+    Connecting from Santa Monica, California; US.
+    IP belongs to AS2914 NTT America, Inc..
+
+
+    Robtex
+    ----------
+
+    County: United States
+    ASN: 2914, NTTC-GIN-AS NTT Communications Global IP
+    WHOIS Desc.: NTT America, Inc. (NTTAM-1)
+    BGP Route: 165.254.0.0/16
+    Active DNS Record: None
+    Active DNS History: d1-6-1-1-1.a00.smtwny01.us.ce.verio.net
+    Passive DNS: hc-1-us-ca-1.services.vnc.com
+    Passive DNS History: None
+
+```
 
 ---
 
