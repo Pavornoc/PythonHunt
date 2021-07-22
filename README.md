@@ -70,11 +70,11 @@ You can do this by using `-f` or `--file`.
 $ investigate -f IoC_file.txt
 ```
 Unfortunately, due to API rate limiting with the free APIs, you may only
-look up 5 items per minute by default.  
-If you have paid for API keys without limits,you can ignore this.  
+look up 5 items per minute by default.
+If you have paid for API keys without limits,you can ignore this.
 
-Otherwise, you can also specify which APIs to use with the optional `-p` 
-or `--platforms` flag after the `-i`, `-d`, or `-f` flags.
+Otherwise, you can also specify which APIs to use with the optional `-p`
+or `--platforms` flag.
 By default, if no platform is specified, the script will run through all
 of them.
 
