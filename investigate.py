@@ -89,13 +89,11 @@ def main():
                     break
                 clean = target.strip()
                 kind = clean.replace(".", "").replace(":", "").replace("/", "")
-                # TODO: Not a gret check for IP address VS domain
-                # "abc123.com" will be skipped for example
                 if kind.isdigit():
                     if is_ratelimited:
                         targets_processed_count += 1
                     ip_check(clean, args.platforms)
-                elif kind.isalpha():
+                elif kind.isalnum():
                     if is_ratelimited:
                         targets_processed_count += 1
                     domain_check(clean, args.platforms)
