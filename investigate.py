@@ -34,7 +34,7 @@ ROBTEX = "robtex"
 SHODAN = "shodan"
 VIRUSTOTAL = "vt"
 WHOIS = "whois"
-PLATFORMS = [
+PLATFORMS = {
     ALIENVAULT_OTX,
     IBM_X_FORCE,
     IPINFO_IO,
@@ -42,7 +42,11 @@ PLATFORMS = [
     SHODAN,
     VIRUSTOTAL,
     WHOIS,
-]
+}
+RATELIMITED_PLATFORMS = {
+    ROBTEX,
+    VIRUSTOTAL,
+}
 
 
 def main():
@@ -77,6 +81,7 @@ def main():
         domain_check(args.domain, args.platforms)
     elif args.file:
         targets_processed_count = 0
+        is_ratelimited = bool(set(args.platforms).intersection(RATELIMITED_PLATFORMS))
         with open(args.file) as file:
             for target in file:
                 if targets_processed_count > 5:
@@ -87,11 +92,11 @@ def main():
                 # TODO: Not a gret check for IP address VS domain
                 # "abc123.com" will be skipped for example
                 if kind.isdigit():
-                    if any(limit in args.platforms for limit in (VIRUSTOTAL, ROBTEX)):
+                    if is_ratelimited:
                         targets_processed_count += 1
                     ip_check(clean, args.platforms)
                 elif kind.isalpha():
-                    if any(limit in args.platforms for limit in (VIRUSTOTAL, ROBTEX)):
+                    if is_ratelimited:
                         targets_processed_count += 1
                     domain_check(clean, args.platforms)
                 else:
