@@ -53,14 +53,10 @@ $ investigate
 
 
 #### Example Usage
-Python Hunt can take single IPs as command line argument with `-i` or `--ipaddress`.
+Python Hunt can perform a lookup for an IP addresse and domain:
 ```bash
-$ investigate -i 95.217.163.246
-```
-
-It can also perform a lookup for domains with `-d` or `--domain` flags.
-```bash
-$ investigate -d apple.com
+$ investigate -t 95.217.163.246
+$ investigate -t apple.com
 ```
 Finally, it can check a file for a list of IPs or Domains.
 You may mix types in the file, but they must be 1 per line.
@@ -79,7 +75,7 @@ By default, if no platform is specified, the script will run through all
 of them.
 
 ```bash
-$ investigate -i 165.254.239.130 -p ipinfo
+$ investigate -t 165.254.239.130 -p ipinfo
 ```
 Or
 ```bash
@@ -89,7 +85,7 @@ $ investigate -f IoC_file.txt -p otx shodan
 #### Example Output
 
 ```bash
-$ investigate -i 193.34.167.111
+$ investigate -t 193.34.167.111
 _________________________________________
 
     Investigating 193.34.167.111:
@@ -159,7 +155,7 @@ _________________________________________
 ---
 
 ```bash
-$ investigate -d creditkarma.com
+$ investigate -t creditkarma.com
 __________________________________________________
 
     Investigating Domain "creditkarma.com"
@@ -210,7 +206,7 @@ __________________________________________________
 ---
 
 ```bash
-$ investigate -i 165.254.239.130 -p ipinfo robtex
+$ investigate -t 165.254.239.130 -p ipinfo robtex
 _________________________________________
 
     Investigating 165.254.239.130:
