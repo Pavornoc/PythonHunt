@@ -51,15 +51,26 @@ RATELIMITED_PLATFORMS = {
 
 def main():
     """
+    Parse arguments and run the checks.
+    """
+    args = get_args()
+    if args.target:
+        targets = [args.target]
+    else:
+        with open(args.file) as f:
+            targets = f.readlines()
+    check_targets(targets, args.platforms)
+
+
+def get_args():
+    """
     Defining main parser for arguments passed to the script.
     """
-
     parser = argparse.ArgumentParser(
         description="Investigate an IP address or Domain for available OSINT."
     )
     group = parser.add_mutually_exclusive_group(required=True)
-    group.add_argument("-i", "--ipaddress", help="IP to investigate.")
-    group.add_argument("-d", "--domain", help="Domain to investigate.")
+    group.add_argument("-t", "--target", help="Target (IP or domain) to investigate.")
     group.add_argument(
         "-f",
         "--file",
@@ -73,32 +84,65 @@ def main():
         default=PLATFORMS,
         choices=PLATFORMS,
     )
-    args = parser.parse_args()
+    return parser.parse_args()
 
-    if args.ipaddress:
-        ip_check(args.ipaddress, args.platforms)
-    elif args.domain:
-        domain_check(args.domain, args.platforms)
-    elif args.file:
-        targets_processed_count = 0
-        is_ratelimited = bool(set(args.platforms).intersection(RATELIMITED_PLATFORMS))
-        with open(args.file) as file:
-            for target in file:
-                if targets_processed_count > 5:
-                    print("Stopping due to API ratelimits.")
-                    break
-                clean = target.strip()
-                kind = clean.replace(".", "").replace(":", "").replace("/", "")
-                if kind.isdigit():
-                    if is_ratelimited:
-                        targets_processed_count += 1
-                    ip_check(clean, args.platforms)
-                elif kind.isalnum():
-                    if is_ratelimited:
-                        targets_processed_count += 1
-                    domain_check(clean, args.platforms)
-                else:
-                    print(f"Skipping {clean}, can't determine the type.")
+
+def check_targets(targets, platforms):
+    """
+    Check the list of targets (IP or domain).
+    """
+    targets_processed_count = 0
+    is_ratelimited = bool(set(platforms).intersection(RATELIMITED_PLATFORMS))
+    for target in targets:
+        if targets_processed_count > 5:
+            print("Stopping due to API ratelimits.")
+            break
+        target = target.strip()
+        kind = target.replace(".", "").replace(":", "").replace("/", "")
+        if kind.isdigit():
+            # Target only contains digits, must be an IP address
+            if is_ratelimited:
+                targets_processed_count += 1
+            ip_check(target, platforms)
+        elif kind.isalnum():
+            # Target must be a domain
+            if is_ratelimited:
+                targets_processed_count += 1
+            domain_check(target, platforms)
+        else:
+            print(f"Skipping {target}, can't determine the type.")
+
+
+def ip_check(target, platforms):
+    """
+    Collection of all IP check functions to run.
+    """
+    if IPINFO_IO in platforms:
+        geo_info(target)
+    if SHODAN in platforms:
+        shodan_check(target)
+    if VIRUSTOTAL in platforms:
+        vt_ip_check(target)
+    if ALIENVAULT_OTX in platforms:
+        av_otx(target)
+    if IBM_X_FORCE in platforms:
+        xforce_ip(target)
+    if ROBTEX in platforms:
+        robtex(target)
+
+
+def domain_check(target, platforms):
+    """
+    Collection of all Domain check functions to run.
+    """
+    if WHOIS in platforms:
+        whois_lookup(target)
+    if VIRUSTOTAL in platforms:
+        vt_domain_check(target)
+    if ALIENVAULT_OTX in platforms:
+        av_otx_domain(target)
+    if IBM_X_FORCE in platforms:
+        xforce_domain(target)
 
 
 # Start of IP Check functions
@@ -566,38 +610,6 @@ def xforce_domain(target):
                 response.status_code
             )
         )
-
-
-def ip_check(target, platforms):
-    """
-    Collection of all IP check functions to run.
-    """
-    if IPINFO_IO in platforms:
-        geo_info(target)
-    if SHODAN in platforms:
-        shodan_check(target)
-    if VIRUSTOTAL in platforms:
-        vt_ip_check(target)
-    if ALIENVAULT_OTX in platforms:
-        av_otx(target)
-    if IBM_X_FORCE in platforms:
-        xforce_ip(target)
-    if ROBTEX in platforms:
-        robtex(target)
-
-
-def domain_check(target, platforms):
-    """
-    Collection of all Domain check functions to run.
-    """
-    if WHOIS in platforms:
-        whois_lookup(target)
-    if VIRUSTOTAL in platforms:
-        vt_domain_check(target)
-    if ALIENVAULT_OTX in platforms:
-        av_otx_domain(target)
-    if IBM_X_FORCE in platforms:
-        xforce_domain(target)
 
 
 if __name__ == "__main__":
