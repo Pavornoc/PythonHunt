@@ -14,7 +14,7 @@ domains.
 * WHOIS
 * VirusTotal
 * AlienVault OTX
-* Robtex
+* BGPView
 * IBM X-Force
 * Shodan
 * ipinfo.io
@@ -71,7 +71,7 @@ $ investigate -f IoC_file.txt
 ```
 Unfortunately, due to API rate limiting with the free APIs, you may only
 look up 5 items per minute by default.
-If you have paid for API keys without limits,you can ignore this.
+If you have paid for API keys without limits, you can ignore this.
 
 Otherwise, you can also specify which APIs to use with the optional `-p`
 or `--platforms` flag.
@@ -89,147 +89,145 @@ $ investigate -f IoC_file.txt -p otx shodan
 #### Example Output
 
 ```bash
-$ investigate -i 193.34.167.111
+$ investigate -i 82.117.252.141
 _________________________________________
 
-    Investigating 193.34.167.111:
+    Investigating 82.117.252.141:
 
-    Connecting from Utrecht, Utrecht; NL.
-    IP belongs to AS62370 Snel.com B.V..
-
+    Connecting from Miami, Florida; US.
+    IP belongs to AS204957 GREEN FLOID LLC.
+        
 
     Shodan
     ----------
 
     Geolocation double-check:
-        Utrecht, Netherlands, 09; Owned by Snel.com B.V..
-
+        Miami, United States, FL
+        Owned by Green Floid LLC.
 
     Additional Shodan Info:
-        OS: No Data
-        Port(s): [80, 123, 443]
-        Hostname: ['srv-1.canajambe.io']
-        Last Updated: 2021-03-22T09:12:54.583341
-
+        OS: None
+        Port(s): [3000, 5985, 3389, 5357]
+        Hostname: ['dedic-chertoganov123-1110631.hosted-by-itldc.com']
+        Last Updated: 2023-06-07T23:23:22.165526
+            
 
     VirusTotal
     ----------
 
     Scan Stats:
-    Country is not in VT dataset.
-    AS Owner is not found.
-    Harmless: No Data
-    Suspicious: No Data
-    Malicious: No Data
-    Undetected: No Data
-
+    Country is US
+    AS Owner is Green Floid LLC
+    Harmless: 67
+    Suspicious: 0
+    Malicious: 0
+    Undetected: 20
+            
 
     AlienVault OTX
     ----------
 
-    Pulse Count: 3
+    Pulse Count: 9
     Reputation Score: 0
-    Pulse Name(s): New macOS malware XcodeSpy Targets Xcode Developers with EggShell Backdoor, New macOS malware XcodeSpy Targets Xcode Developers with EggShell Backdoor, New macOS malware XcodeSpy Targets Xcode Developers with EggShell Backdoor - SentinelLabs
-
-
+    Pulse Name(s): #StopRansomware: CL0P Ransomware Gang Exploits CVE-2023-34362 MOVEit Vulnerability, InQuest - 08-06-2023, StopRansomware: CL0P Ransomware Gang Exploits CVE-2023-34362 MOVEit Vulnerability, StopRansomware: CL0P Ransomware  Gang Exploits  CVE-2023-34362 MOVEit Vulnerability, #StopRansomware: CL0P Ransomware Gang Exploits CVE-2023-34362 MOVEit Vulnerability | CISA, #StopRansomware: CL0P Ransomware Gang Exploits CVE-2023-34362 MOVEit Vulnerability | CISA, InQuest - 07-06-2023, #StopRansomware: CL0P Ransomware Gang Exploits CVE-2023-34362 MOVEit Vulnerability, #StopRansomware: CL0P Ransomware Gang Exploits CVE-2023-34362 MOVEit Vulnerability | CISA
+                
 
     IBM X-Force
     ----------
 
     Recent Report Created: 2012-03-22T07:26:00.000Z
-    IP Geolocation: Netherlands
+    IP Geolocation: No Data.
     Reputation Score: 1
     Report Created Reason: One of the five RIRs announced a (new) location mapping of the IP.
+            
 
-
-    Robtex
+    BGPView
     ----------
 
-    County: Netherlands
-    ASN: 62370, Snel
-    WHOIS Desc.: To determine the registration information for a more specific range, please try a more specific query. If you see this object as a result of a single IP query, it means the IP address is currently in the free pool of address space managed by the RIPE NCC.
-    BGP Route: 193.34.166.0/23
-    Active DNS Record: hosted-by.snelis.com
-    Active DNS History: None
-    Passive DNS: None
-    Passive DNS History: ns2.hartelust.com, ns2.pernillasart.com, ns2.vesconet.com
+    PTR Record: dedic-chertoganov123-1110631.hosted-by-itldc.com
+    Network Block: 82.117.252.0/22
+        IP: 82.117.252.0
+        CIDR: 22
+    Date Allocated: 2009-05-19 00:00:00
 
-  ```
-
----
+```    
 
 ```bash
-$ investigate -d creditkarma.com
+$ investigate -d ef0h.com
 __________________________________________________
 
-    Investigating Domain "creditkarma.com"
+    Investigating Domain "ef0h.com"
 
 
     WHOIS
     ----------
 
-    Created on 2005-08-30 02:56:23
-    Expires on 2021-08-30 02:56:23
-    Registrar: CSC Corporate Domains, Inc.
-    Last Updated: 2019-04-15 21:04:38
-    Registered in: US
-    Name Servers: ns1.p16.dynect.net, ns2.p16.dynect.net, ns3.p16.dynect.net, ns4.p16.dynect.net
-
+    Created on 2023-03-01 14:47:07
+    Expires on 2024-03-01 14:47:07
+    Registrar: Tucows Domains Inc.
+    Last Updated: 2023-04-07 17:53:45
+    Registered in: KN
+    Name Servers: 1-you.njalla.no, 2-can.njalla.in, 3-get.njalla.fo
+        
 
     VirusTotal
     ----------
 
-    Domain Created: 2005-08-29 10:56:23
-    Alexa Rank: 355
-    Cisco Umbrella Rank: 24496
+    Domain Created: 2023-02-28 07:00:00
+    Alexa Rank: No Data.
+    Cisco Umbrella Rank: No Data.
     Overall Reputation: 0
-    Harmless: 75
-    Suspicious: None.
-    Malicious: None.
-    Undetected: 7
-
+    Harmless: 54
+    Suspicious: 0
+    Malicious: 12
+    Undetected: 21
+            
 
     AlienVault OTX
     ----------
 
-    Pulse Count: 1
-    Reputation Score: No Data
-    Pulse Name(s): xdgcdn.com -  cdn-me.com - squatting - phishing - icloud - itunes - music - inaudible - bluetooth - nfc - hacking the human
-
+    Pulse Count: 12
+    Reputation Score: No Data.
+    Pulse Name(s): CryptoClippy is Evolving to Pilfer Even More Financial Data, InQuest - 08-06-2023, Malware - Malware Domain Feed V2 - November 03 2020, InQuest - 07-06-2023, InQuest - 06-06-2023, InQuest - 05-06-2023, InQuest - 04-06-2023, InQuest - 03-06-2023, InQuest - 02-06-2023, InQuest - 01-06-2023, InQuest - 31-05-2023, InQuest - 30-05-2023
+                    
 
     IBM X-Force
     ----------
 
-    Name: Credit Karma
-    Score: 1
-    Description: A free credit and financial management platform
-    Categories: Financial Services / Insurance / Real Estate, Banking
+    Domain not in X-Force database
+            
 
 ```
 
 ---
 
 ```bash
-$ investigate -i 165.254.239.130 -p ipinfo robtex
+$ investigate.py -i 134.209.101.105 -p ipinfo otx vt                                                            2 ↵
 _________________________________________
 
-    Investigating 165.254.239.130:
+    Investigating 134.209.101.105:
 
-    Connecting from Santa Monica, California; US.
-    IP belongs to AS2914 NTT America, Inc..
+    Connecting from Singapore, Singapore; SG.
+    IP belongs to AS14061 DigitalOcean, LLC.
+        
 
-
-    Robtex
+    VirusTotal
     ----------
 
-    County: United States
-    ASN: 2914, NTTC-GIN-AS NTT Communications Global IP
-    WHOIS Desc.: NTT America, Inc. (NTTAM-1)
-    BGP Route: 165.254.0.0/16
-    Active DNS Record: None
-    Active DNS History: d1-6-1-1-1.a00.smtwny01.us.ce.verio.net
-    Passive DNS: hc-1-us-ca-1.services.vnc.com
-    Passive DNS History: None
+    Scan Stats:
+    Country is SG
+    AS Owner is DIGITALOCEAN-ASN
+    Harmless: 57
+    Suspicious: 1
+    Malicious: 11
+    Undetected: 18
+            
+
+    AlienVault OTX
+    ----------
+
+    No findings for this IP.
+                
 
 ```
 
@@ -242,5 +240,5 @@ _________________________________________
 * [IP Info](https://ipinfo.io)
 * [Shodan](https://shodan.io)
 * [IBM X-Force Exchange](https://exchange.xforce.ibmcloud.com/)
-* [Robtex](https://www.robtex.com)
+* [BGPView](https://bgpview.io/)
 

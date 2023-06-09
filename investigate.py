@@ -18,19 +18,19 @@ import whois
 # https://virustotal.com
 # https://exchange.xforce.ibmcloud.com/
 
-SHODAN_API = "[YOUR API KEY HERE]"
-VT_API = "[YOUR API KEY HERE]"
+SHODAN_API = "{Your API Key Here}"
+VT_API = "{Your API Key Here}"
 # X-Force API is not actually the API key, but the base64 value of the API Key
 # and the API Password.  Do a test at the following documentation site to get
 # the value from the cURL request:
 # https://api.xforce.ibmcloud.com/doc/#IP_Reputation_get_ipr_ip
-XFORCE_API = "[YOUR API KEY HERE]"
+XFORCE_API = "{Your base64'd API Key Here}"
 
 # Platforms
 ALIENVAULT_OTX = "otx"
 IBM_X_FORCE = "x-force"
 IPINFO_IO = "ipinfo"
-ROBTEX = "robtex"
+BGPVIEW = "bgpview"
 SHODAN = "shodan"
 VIRUSTOTAL = "vt"
 WHOIS = "whois"
@@ -38,13 +38,12 @@ PLATFORMS = {
     ALIENVAULT_OTX,
     IBM_X_FORCE,
     IPINFO_IO,
-    ROBTEX,
+    BGPVIEW,
     SHODAN,
     VIRUSTOTAL,
     WHOIS,
 }
 RATELIMITED_PLATFORMS = {
-    ROBTEX,
     VIRUSTOTAL,
 }
 
@@ -257,64 +256,48 @@ def av_otx(target):
         )
 
 
-def robtex(target):
+def bgpview(target):
     """
-    Robtex provides acitve and passive DNS data, as well as BGP routing data.
+    Additional information on an IP including DNS or ptr_record, and network
+    block information.
     """
-    # Robtex doesn't accept the Python UA for some reason, so we need to set a
-    # custom UA.  This one is mimicking Firefox 90 on MacOS Big Sur.
-    # Change if desired.
-    headers = {
-        "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:90.0) Gecko/20100101 Firefox/90.0"
-    }
-    data = requests.get(
-        f"https://freeapi.robtex.com/ipquery/{target}", headers=headers
-    ).json()
-    status = data["status"]
+    url = f"https://api.bgpview.io/ip/{target}"
+    response = requests.get(url)
+    data = response.json()
+
+    ptr = data["data"]["ptr_record"]
+    prefix = data["data"]["rir_allocation"]["prefix"]
+    ip = data["data"]["rir_allocation"]["ip"]
+    cidr = data["data"]["rir_allocation"]["cidr"]
+    allocated = data["data"]["rir_allocation"]["date_allocated"]
+
     print(
         """
-    Robtex
+    BGPView
     ----------"""
     )
-    if status == "ok":
-        active_dns = [hit["o"] for hit in data.get("act", [])]
-        active_hist = [hit["o"] for hit in data.get("acth", [])]
-        passive_dns = [hit["o"] for hit in data.get("pas", [])]
-        passive_hist = [hit["o"] for hit in data.get("pash", [])]
+    if response.status_code == 200:
         print(
             """
-    County: {}
-    ASN: {}, {}
-    WHOIS Desc.: {}
-    BGP Route: {}
-    Active DNS Record: {}
-    Active DNS History: {}
-    Passive DNS: {}
-    Passive DNS History: {}
-                """.format(
-                data.get("country", "No Data."),
-                data.get("as", "No Data."),
-                data.get("asname", "No Data."),
-                data.get("whoisdesc", "No Data."),
-                data.get("bgproute", "No Data."),
-                ", ".join(active_dns) if active_dns else "None",
-                ", ".join(active_hist) if active_hist else "None",
-                ", ".join(passive_dns) if passive_dns else "None",
-                ", ".join(passive_hist) if passive_hist else "None",
+    PTR Record: {}
+    Network Block: {}
+        IP: {}
+        CIDR: {}
+    Date Allocated: {}
+
+            """.format(
+            ptr if ptr else "No Data",
+            prefix if prefix else "No Data",
+            ip if ip else "No Data",
+            cidr if cidr else "No Data",
+            allocated if allocated else "No Data",
             )
-        )
-    elif status == "ratelimited":
-        print(
-            """
-    API Rate Limit reached. Try again soon.
-        """
         )
     else:
         print(
-            """
-    Robtex has no records.
         """
-        )
+    API Error {}
+        """).format(response.status_code)
 
 
 def xforce_ip(target):
@@ -582,8 +565,8 @@ def ip_check(target, platforms):
         av_otx(target)
     if IBM_X_FORCE in platforms:
         xforce_ip(target)
-    if ROBTEX in platforms:
-        robtex(target)
+    if BGPVIEW in platforms:
+        bgpview(target)
 
 
 def domain_check(target, platforms):
