@@ -5,11 +5,12 @@ Script to assist in investigations by collecting IP data from various sources.
 """
 
 import argparse
+import json
+import re
+import subprocess
+import urllib.error
+import urllib.request
 from datetime import datetime
-
-import requests
-import shodan
-import whois
 
 # API Keys
 # API Keys are required for Shodan, VirusTotal, and Greynoise
@@ -18,9 +19,9 @@ import whois
 # https://virustotal.com
 # https://viz.greynoise.io
 
-SHODAN_API = "[YOUR API KEY HERE]"
-VT_API = "[YOUR API KEY HERE]"
-GREYNOISE_API = "[YOUR API KEY HERE]"
+SHODAN_API = "[YOUR-API-KEY-HERE]"
+VT_API = "[YOUR-API-KEY-HERE]"
+GREYNOISE_API = "[YOUR-API-KEY-HERE]"
 
 # Platforms
 ALIENVAULT_OTX = "otx"
@@ -44,6 +45,23 @@ RATELIMITED_PLATFORMS = {
     ROBTEX,
     VIRUSTOTAL,
 }
+
+
+def http_get(url, headers=None, timeout=10):
+    """Perform an HTTP GET and return (status_code, json_data)."""
+    req = urllib.request.Request(url, headers=headers or {})
+    try:
+        with urllib.request.urlopen(req, timeout=timeout) as response:
+            return response.status, json.loads(response.read().decode())
+    except urllib.error.HTTPError as e:
+        try:
+            body = json.loads(e.read().decode())
+        except Exception:
+            body = {}
+        return e.code, body
+    except urllib.error.URLError as e:
+        print(f"    Network error: {e.reason}")
+        return None, {}
 
 
 def main():
@@ -81,10 +99,12 @@ def main():
         is_ratelimited = bool(set(args.platforms).intersection(RATELIMITED_PLATFORMS))
         with open(args.file) as file:
             for target in file:
-                if targets_processed_count > 5:
+                if targets_processed_count >= 5:
                     print("Stopping due to API ratelimits.")
                     break
                 clean = target.strip()
+                if not clean:
+                    continue
                 kind = clean.replace(".", "").replace(":", "").replace("/", "")
                 if kind.isdigit():
                     if is_ratelimited:
@@ -105,7 +125,7 @@ def geo_info(target):
     """
     Basic geolocation and IP ownership information.
     """
-    data = requests.get(f"https://ipinfo.io/{target}/json").json()
+    _, data = http_get(f"https://ipinfo.io/{target}/json")
     print(
         """_________________________________________
 
@@ -133,10 +153,11 @@ def shodan_check(target):
     Shodan
     ----------"""
     )
-    try:
-        data = shodan.Shodan(SHODAN_API).host(target)
-    except shodan.APIError as error:
-        print(f"    {error}")
+    status, data = http_get(
+        f"https://api.shodan.io/shodan/host/{target}?key={SHODAN_API}"
+    )
+    if status != 200:
+        print(f"    {data.get('error', 'Shodan API error.')}")
     else:
         print(
             """
@@ -171,15 +192,15 @@ def vt_ip_check(target):
     """
     url = f"https://www.virustotal.com/api/v3/ip_addresses/{target}"
     headers = {"x-apikey": VT_API}
-    response = requests.get(url, headers=headers)
-    attributes = response.json().get("data", {}).get("attributes", {})
+    status, response_data = http_get(url, headers=headers)
+    attributes = response_data.get("data", {}).get("attributes", {})
     last_analysis = attributes.get("last_analysis_stats", {})
     print(
         """
     VirusTotal
     ----------"""
     )
-    if response.status_code == 200:
+    if status == 200:
         print(
             """
     Scan Stats:
@@ -203,7 +224,7 @@ def vt_ip_check(target):
             """
     Error:
     VirusTotal Response Code {}""".format(
-                response.status_code
+                status
             )
         )
 
@@ -214,15 +235,14 @@ def av_otx(target):
     datafeed for malware/malicious action.
     """
     url = f"https://otx.alienvault.com/api/v1/indicators/IPv4/{target}"
-    response = requests.get(url)
-    data = response.json()
+    status, data = http_get(url)
 
     print(
         """
     AlienVault OTX
     ----------"""
     )
-    if response.status_code == 200:
+    if status == 200:
         pulse_count = data.get("pulse_info", {}).get("count")
         if pulse_count > 0:
             pulse_name = [item["name"] for item in data["pulse_info"]["pulses"]]
@@ -249,7 +269,7 @@ def av_otx(target):
         print(
             """
     Error: OTX response code: {}""".format(
-                response.status_code
+                status
             )
         )
 
@@ -264,9 +284,7 @@ def robtex(target):
     headers = {
         "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:102.0) Gecko/20100101 Firefox/102.0"
     }
-    data = requests.get(
-        f"https://freeapi.robtex.com/ipquery/{target}", headers=headers
-    ).json()
+    _, data = http_get(f"https://freeapi.robtex.com/ipquery/{target}", headers=headers)
     status = data["status"]
     print(
         """
@@ -319,17 +337,14 @@ def greynoise(target):
     Checking Greynoise for data on scanning IPs and "noisy" traffic.
     """
     url = f"https://api.greynoise.io/v3/community/{target}"
-    headers = {
-        'key': GREYNOISE_API
-    }
-    response = requests.request("GET", url, headers=headers)
+    headers = {"key": GREYNOISE_API}
+    status, data = http_get(url, headers=headers)
     print(
         """
     Greynoise
     ----------"""
     )
-    if response.status_code == 200:
-        data = response.json()
+    if status == 200:
         print(
             """
     IP: {}
@@ -349,7 +364,7 @@ def greynoise(target):
                 data.get("link", "No Data.")
             )
         )
-    elif response.status_code == 404:
+    elif status == 404:
         print(
             """
     IP not found in Greynoise database.
@@ -360,7 +375,7 @@ def greynoise(target):
             """
     Greynoise Response Code: {}
             """.format(
-                response.status_code
+                status
             )
         )
 
@@ -370,34 +385,41 @@ def greynoise(target):
 
 def whois_lookup(target):
     """
-    Basic WHOIS data lookup. Uses https://github.com/DannyCork/python-whois/
+    Basic WHOIS data lookup using the macOS system whois command.
     """
     try:
-        domain = whois.query(target)
-        if domain is None:
-            print("Domain not found in WHOIS")
-            name = "Not Found."
-            created = "No Data."
-            expires = "No Data."
-            updated = "No Data."
-            reg = "No Data."
-            country = "No Data."
-            nameservers = None
-            ns_clean = None
-        else:
-            name = domain.name
-            created = domain.creation_date
-            expires = domain.expiration_date
-            updated = domain.last_updated
-            reg = domain.registrar
-            country = domain.registrant_country
-            nameservers = domain.name_servers
-            ns_clean = set(server.strip() for server in nameservers)
-    except AttributeError as error:
-        print(error)
-    else:
-        print(
-            """__________________________________________________
+        result = subprocess.run(
+            ["whois", target], capture_output=True, text=True, timeout=30
+        )
+        output = result.stdout
+    except (subprocess.TimeoutExpired, FileNotFoundError) as error:
+        print(f"    WHOIS error: {error}")
+        return
+
+    def extract(patterns, text):
+        for pattern in patterns:
+            match = re.search(pattern, text, re.IGNORECASE | re.MULTILINE)
+            if match:
+                return match.group(1).strip()
+        return "No Data"
+
+    name = extract([r"^Domain Name:\s*(.+)$"], output)
+    created = extract([r"^Creation Date:\s*(.+)$", r"^Created:\s*(.+)$"], output)
+    expires = extract(
+        [r"^Registry Expiry Date:\s*(.+)$", r"^Expir\w+ Date:\s*(.+)$"], output
+    )
+    updated = extract([r"^Updated Date:\s*(.+)$", r"^Last Updated:\s*(.+)$"], output)
+    reg = extract([r"^Registrar:\s*(.+)$"], output)
+    country = extract(
+        [r"^Registrant Country:\s*(.+)$", r"^Country:\s*(.+)$"], output
+    )
+    ns_matches = re.findall(
+        r"^Name Server:\s*(.+)$", output, re.IGNORECASE | re.MULTILINE
+    )
+    ns_clean = set(ns.strip().lower() for ns in ns_matches) if ns_matches else None
+
+    print(
+        """__________________________________________________
 
     Investigating Domain "{}"
 
@@ -412,15 +434,15 @@ def whois_lookup(target):
     Registered in: {}
     Name Servers: {}
         """.format(
-                name if name else "No Data",
-                created if created else "No Data",
-                expires if expires else "No Data",
-                reg if reg else "No Data",
-                updated if updated else "No Data",
-                country if country else "No Data",
-                ", ".join(sorted(list(ns_clean))) if ns_clean else "No Data",
-            )
+            name,
+            created,
+            expires,
+            reg,
+            updated,
+            country,
+            ", ".join(sorted(ns_clean)) if ns_clean else "No Data",
         )
+    )
 
 
 def vt_domain_check(target):
@@ -429,20 +451,17 @@ def vt_domain_check(target):
     """
     url = f"https://www.virustotal.com/api/v3/domains/{target}"
     headers = {"x-apikey": VT_API}
-    response = requests.get(url, headers=headers)
-    data = response.json()
+    status, data = http_get(url, headers=headers)
     attributes = data.get("data", {}).get("attributes", {})
-    rank = data.get("data", {}).get("attributes", {}).get("popularity_ranks", {})
-    last_analysis = (
-        data.get("data", {}).get("attributes", {}).get("last_analysis_stats", {})
-    )
+    rank = attributes.get("popularity_ranks", {})
+    last_analysis = attributes.get("last_analysis_stats", {})
     creation_date = attributes.get("creation_date")
     print(
         """
     VirusTotal
     ----------"""
     )
-    if response.status_code == 200:
+    if status == 200:
         print(
             """
     Domain Created: {}
@@ -471,7 +490,7 @@ def vt_domain_check(target):
             """
     Error:
     VirusTotal Response Code {}""".format(
-                response.status_code
+                status
             )
         )
 
@@ -482,20 +501,20 @@ def av_otx_domain(target):
     datafeed for malware/malicious action.
     """
     url = f"https://otx.alienvault.com/api/v1/indicators/domain/{target}"
-    response = requests.get(url)
-    data = response.json()
+    status, data = http_get(url)
     pulse_count = data.get("pulse_info", {}).get("count", "No Data")
     print(
         """
     AlienVault OTX
     ----------"""
     )
-    if response.status_code == 200:
+    if status == 200:
         if pulse_count > 0:
             try:
                 pulse_name = [item["name"] for item in data["pulse_info"]["pulses"]]
             except TypeError as error:
                 print(error)
+                pulse_name = []
             print(
                 """
     Pulse Count: {}
@@ -518,7 +537,7 @@ def av_otx_domain(target):
             """
     Error: OTX Response Code {}
             """.format(
-                response.status_code
+                status
             )
         )
 
