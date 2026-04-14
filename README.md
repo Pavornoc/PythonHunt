@@ -35,12 +35,11 @@ NOTE: All three of these APIs can be obtained with free accounts.
 #### Installation and Requirements
 This is built for Python 3.x.
 
-Install required modules with:
-```bash
-python3 -m pip install -r requirements.txt
-```
+A recent rework of this script should allow you to run this on MacOS and Linux 
+without the need to install any additional packages or run in it a virtual
+environment (venv).
 
-You will need to also edit the main script to include your API keys for a few
+You will need to edit the main script to include your API keys for a few
 of the platforms.  Do this in the "API Key" section near the top of the code.
 
 If you'd like to link this in your CLI $PATH, perform the following:
@@ -222,7 +221,7 @@ _________________________________________
 
 ---
 
-#### Thank you to the following projects
+### Thank you to the following projects
 * [Python Whois](https://pypi.org/project/python-whois/)
 * [VirusTotal](https://virustotal.com)
 * [AlienVault](https://otx.alienvault.com)
