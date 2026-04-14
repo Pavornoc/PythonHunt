@@ -6,7 +6,9 @@ Script to assist in investigations by collecting IP data from various sources.
 
 import argparse
 import json
+import os
 import re
+import ssl
 import subprocess
 import urllib.error
 import urllib.request
@@ -50,8 +52,15 @@ RATELIMITED_PLATFORMS = {
 def http_get(url, headers=None, timeout=10):
     """Perform an HTTP GET and return (status_code, json_data)."""
     req = urllib.request.Request(url, headers=headers or {})
+    ctx = ssl.create_default_context()
+    if not ctx.cert_store_stats()["x509"]:
+        # Python.org macOS builds ship without a CA bundle; fall back to system paths
+        for path in ("/etc/ssl/cert.pem", "/etc/ssl/certs/ca-certificates.crt"):
+            if os.path.exists(path):
+                ctx.load_verify_locations(cafile=path)
+                break
     try:
-        with urllib.request.urlopen(req, timeout=timeout) as response:
+        with urllib.request.urlopen(req, timeout=timeout, context=ctx) as response:
             return response.status, json.loads(response.read().decode())
     except urllib.error.HTTPError as e:
         try:
